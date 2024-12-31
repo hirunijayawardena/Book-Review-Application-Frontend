@@ -1,6 +1,9 @@
-import 'package:book_review_app/home.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:image_picker/image_picker.dart';
+
+import 'package:book_review_app/home.dart';
 
 class BookReviewForm extends StatefulWidget{
   const BookReviewForm({super.key});
@@ -16,37 +19,55 @@ class _BookReviewFormState extends State<BookReviewForm>{
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _authorController = TextEditingController();
   final TextEditingController _reviewController = TextEditingController();
+  XFile? _selectedImage;
+
 
   void _showSuccessMessage() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          content: const Text('Review submitted successfully!'),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.push(
+  setState(() {
+    _selectedImage = null; // Clear selected image
+  });
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        content: const Text('Review submitted successfully!'),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('OK'),
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.push(
                   context, 
                   MaterialPageRoute(builder: (context) => const Home())
                 );
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
+            },
+          ),
+        ],
+      );
+    },
+  );
+ }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Book Review Form'),
-      ),
-      body: Padding(
+  Future<void> _selectImage() async {
+  final picker = ImagePicker();
+  final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+  if (mounted && image != null) {
+    setState(() {
+      _selectedImage = image;
+    });
+  }
+}
+
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: const Text('Book Review'),
+    ),
+    body: SingleChildScrollView(
+      child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,6 +82,8 @@ class _BookReviewFormState extends State<BookReviewForm>{
               decoration: const InputDecoration(labelText: 'Author'),
             ),
             const SizedBox(height: 36),
+
+            // Star rating
             Text(
               'Rating: ${_rating.toStringAsFixed(1)}',
               style: const TextStyle(fontSize: 16),
@@ -81,8 +104,9 @@ class _BookReviewFormState extends State<BookReviewForm>{
                 setState(() {
                   _rating = rating;
                 });
-              },
+              },  
             ),
+
             const SizedBox(height: 8),
             TextField(
               controller: _reviewController,
@@ -90,35 +114,29 @@ class _BookReviewFormState extends State<BookReviewForm>{
               decoration: const InputDecoration(labelText: 'Review'),
             ),
             const SizedBox(height: 16),
-            // Add image button here
-            GestureDetector(
-              onTap: () {
-                // Handle image button click
-                print('Image button clicked');
-              },
-              child: Container(
-                width: 150,
-                height: 50,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: Colors.blue,
-                ),
-                child: Center(
-                  child: Image.asset(
-                    'assets/add_book.png', // Replace with your actual image path
-                    width: 50,
-                    height: 50,
-                  ),
-                ),
-              ),
+            
+            // "Add Image" button
+            ElevatedButton.icon(
+              icon: const Icon(Icons.add_a_photo),
+              label: const Text('Add Image'),
+              onPressed: _selectImage,
             ),
+            const SizedBox(height: 8),
+      
+            // Display selected image
+            if (_selectedImage != null)
+              Image.file(File(_selectedImage!.path)),
+        
+            const SizedBox(height: 16),
+
+            //Submit Review button
             ElevatedButton(
               onPressed: () {
                 print('Title: ${_titleController.text}');
                 print('Author: ${_authorController.text}');
                 print('Rating: $_rating');
                 print('Review: ${_reviewController.text}');
-
+        
                  _showSuccessMessage();
               },
               style: ElevatedButton.styleFrom(
@@ -130,6 +148,6 @@ class _BookReviewFormState extends State<BookReviewForm>{
           ],
         ),
       ),
-    );
+    ),);
   }
 }
